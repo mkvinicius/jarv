@@ -127,3 +127,30 @@ Tudo fica salvo localmente na sua máquina, na pasta `~/.jarv/`. Nenhuma convers
 
 **Como eu atualizo o JARV?**
 Basta rodar o comando `jarv update` no terminal.
+
+---
+
+## Uso em Dispositivos Móveis (iPhone e Android)
+
+O JARV não é um aplicativo que você baixa na App Store ou Google Play, porque as lojas de aplicativos têm restrições severas sobre o que uma IA pode fazer no seu dispositivo. 
+
+No entanto, **você pode usar o JARV perfeitamente no seu celular** de duas maneiras oficiais:
+
+### Opção 1: Acesso via Navegador (PWA)
+Se você instalou o JARV no seu computador ou num VPS (servidor na nuvem), você pode acessar o Dashboard dele pelo celular:
+
+1. Certifique-se de que o JARV está rodando no seu computador/servidor.
+2. No celular, abra o Safari (iPhone) ou Chrome (Android).
+3. Digite o endereço IP da máquina onde o JARV está rodando (ex: `http://192.168.1.15:7777` se for na mesma rede Wi-Fi, ou o IP do seu VPS).
+4. O Dashboard do JARV é responsivo e se adapta perfeitamente à tela do celular.
+5. **Dica:** Você pode adicionar a página à Tela de Início do seu celular. Ele vai se comportar como um aplicativo nativo (PWA), em tela cheia e com ícone próprio.
+
+### Opção 2: Integração com Telegram / WhatsApp
+Esta é a forma mais poderosa de usar o JARV no celular. Você pode conectar o JARV ao seu aplicativo de mensagens favorito:
+
+1. No Dashboard do JARV (no computador), vá em **Integrações**.
+2. Conecte o seu bot do Telegram ou número de WhatsApp.
+3. A partir desse momento, você pode mandar mensagens de texto ou áudio para o JARV diretamente pelo Telegram/WhatsApp no seu celular.
+4. O JARV vai processar a mensagem, usar a memória dele, acionar os squads necessários e te responder no próprio aplicativo de mensagens.
+
+*Nota: Não é possível instalar o "motor" do JARV diretamente dentro do iOS ou Android devido às restrições de sistema operacional (sandboxing) da Apple e do Google. O motor roda no seu computador/servidor, e o seu celular funciona como o "controle remoto" perfeito para ele.*
