@@ -50,6 +50,9 @@ O JARV funciona 100% sem internet. Quando conectado, sincroniza memória, acessa
 
 ### Instalação
 
+> 📖 **[Veja o Guia de Instalação Completo (INSTALL.md)](INSTALL.md)** para instruções detalhadas para Mac (Apple Silicon/Intel), Windows, Linux e Raspberry Pi, além de requisitos de hardware.
+
+
 **Executável (recomendado)**
 ```bash
 # Linux / macOS
