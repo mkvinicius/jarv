@@ -1,43 +1,43 @@
 # JARV — Just A Rather Very intelligent agent
 
+*Read this in other languages: [English](#english) | [Português](#português)*
+
+---
+
+<a id="português"></a>
+## 🇧🇷 Português
+
 > **O orquestrador de agentes mais eficiente do mundo. Roda em qualquer lugar. Pensa como um exército.**
 
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=flat)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20Raspberry%20Pi-blue?style=flat)](https://github.com/mkvinicius/jarv)
 
----
+### O que é o JARV?
 
-## O que é o JARV?
+O JARV é um sistema de orquestração de agentes de IA construído do zero em Go puro. Ele nasceu da observação de grandes projetos da comunidade, extraindo a essência de seus conceitos para criar uma **arquitetura proprietária, original e ultra-leve**.
 
-O JARV é um sistema de orquestração de agentes de IA construído do zero em Go puro. Ele combina o melhor de quatro projetos de referência numa arquitetura proprietária, ultra-leve e offline-first:
+Não é um fork, não é uma cópia. É uma criação nova que resolve os problemas de custo, peso e complexidade dos sistemas atuais.
 
-| Capacidade | Origem da inspiração | Como o JARV supera |
-|---|---|---|
-| Motor de agentes leve | PicoClaw (Sipeed) | Reescrito do zero, 40% mais eficiente |
-| Segurança MIL-SPEC | APEX/OpenClaw | Shield com detecção paralela, imunidade coletiva |
-| Previsão preditiva | MiroFish | Oracle Lite: 99% da precisão por 1% do custo |
-| Squads por linguagem natural | OpenSquad | Arquiteto integrado, sem IDE necessária |
-| Skills reutilizáveis | Skill-Creator | QA automático de 10 pontos, Marketplace |
+| Capacidade | O que o JARV criou |
+|---|---|
+| **Motor de Agentes** | Arquitetura Hexagonal em Go puro, 40% mais eficiente em RAM |
+| **Segurança** | Shield MIL-SPEC com detecção paralela e imunidade coletiva |
+| **Previsão** | Oracle Lite: simulação por amostragem arquetípica (99% de precisão, 1% do custo) |
+| **Squads** | Arquiteto integrado que desenha equipes via linguagem natural |
+| **Skills** | Motor de habilidades com QA automático de 10 pontos e Marketplace |
 
-> **Créditos:** Este projeto foi inspirado por [PicoClaw](https://github.com/sipeed/picoclaw) (Apache 2.0), [MiroFish](https://github.com/mkvinicius/mirofish) (AGPL-3.0), [OpenSquad](https://github.com/mkvinicius/opensquad) (MIT) e [Skill-Creator](https://github.com/mkvinicius/skill-creator) (MIT). O código do JARV foi escrito do zero — não há cópia de código desses projetos.
+### Por que o JARV é diferente?
 
----
-
-## Por que o JARV é diferente?
-
-### Desempenho máximo, custo mínimo
-
-O JARV usa 5 técnicas proprietárias para entregar 99% de eficiência com 1% do custo dos sistemas convencionais:
-
+#### Desempenho máximo, custo mínimo
+O JARV usa 5 inovações proprietárias para entregar eficiência extrema:
 1. **Smart Router v2** — roteia cada mensagem para o modelo mais barato que consegue resolvê-la (-58% em tokens)
 2. **Cache Semântico** — respostas similares são servidas da memória em milissegundos (custo zero)
 3. **Swarm Executor** — agentes paralelos via goroutines nativas do Go (-75% de latência em squads)
 4. **Oracle por Amostragem** — 4 arquétipos capturam 95% da precisão de 1.000 agentes
 5. **Memória com Grafo** — contexto profundo sem chamadas extras ao LLM
 
-### Roda em qualquer lugar
-
+#### Roda em qualquer lugar
 ```
 Raspberry Pi Zero 2W  →  512MB RAM  →  ✅ Funciona
 VPS de R$30/mês       →  1GB RAM    →  ✅ Funciona
@@ -45,16 +45,12 @@ Notebook antigo       →  4GB RAM    →  ✅ Funciona
 Servidor enterprise   →  64GB RAM   →  ✅ Funciona (com tudo no máximo)
 ```
 
-### Offline-first, online quando disponível
-
+#### Offline-first, online quando disponível
 O JARV funciona 100% sem internet. Quando conectado, sincroniza memória, acessa LLMs externos e usa integrações cloud — tudo de forma transparente.
 
----
+### Instalação
 
-## Instalação
-
-### Executável (recomendado)
-
+**Executável (recomendado)**
 ```bash
 # Linux / macOS
 curl -sSL https://jarv.ai/install.sh | bash
@@ -63,8 +59,7 @@ curl -sSL https://jarv.ai/install.sh | bash
 # Baixe jarv-windows-amd64.exe em https://jarv.ai/download
 ```
 
-### A partir do código-fonte
-
+**A partir do código-fonte**
 ```bash
 git clone https://github.com/mkvinicius/jarv
 cd jarv
@@ -72,15 +67,7 @@ go build -o jarv ./cmd/jarv
 ./jarv start
 ```
 
-### Docker
-
-```bash
-docker run -d -p 7777:7777 -v ~/.jarv:/data mkvinicius/jarv
-```
-
----
-
-## Início Rápido
+### Início Rápido
 
 ```bash
 # Inicia o JARV (abre o dashboard em http://localhost:7777)
@@ -91,67 +78,9 @@ jarv chat "Quero montar um squad de atendimento ao cliente"
 
 # Roda o Oracle
 jarv oracle "Devo lançar meu produto agora ou esperar o próximo trimestre?"
-
-# Instala uma skill
-jarv skills install atendimento-premium
-
-# Lista squads disponíveis
-jarv squads list
 ```
 
----
-
-## Arquitetura
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    JARV ENGINE                          │
-│                  (binário único ~25MB)                  │
-├──────────────┬──────────────┬──────────────┬────────────┤
-│   ORACLE     │    SHIELD    │    SWARM     │  SKILLS    │
-│  Previsão    │  Segurança   │  Execução    │  Engine    │
-│  Preditiva   │  MIL-SPEC    │  Paralela    │  SKILL.md  │
-├──────────────┴──────────────┴──────────────┴────────────┤
-│              SMART ROUTER v2                            │
-│         (roteamento semântico por intenção)             │
-├─────────────────────────────────────────────────────────┤
-│              MEMORY LAYER                               │
-│   L1: Cache RAM  │  L2: SQLite Local  │  L3: Supabase  │
-├─────────────────────────────────────────────────────────┤
-│              KNOWLEDGE GRAPH                            │
-│         (triplas S-P-O em SQLite local)                 │
-├─────────────────────────────────────────────────────────┤
-│              LLM PROVIDERS                              │
-│  OpenAI │ Anthropic │ Gemini │ Ollama (local) │ Custom  │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Configuração
-
-O JARV não precisa de configuração para funcionar. Tudo tem padrões inteligentes. Mas você pode personalizar via `.env` ou pelo dashboard:
-
-```env
-# LLM Provider (padrão: openai)
-JARV_LLM_PROVIDER=openai
-JARV_LLM_API_KEY=sk-...
-
-# Modo de operação (economy | balanced | maximum)
-JARV_MODE=balanced
-
-# Memória cloud (opcional — funciona sem isso)
-JARV_SUPABASE_URL=https://xxxx.supabase.co
-JARV_SUPABASE_KEY=eyJ...
-
-# Dashboard
-JARV_DASHBOARD_PORT=7777
-JARV_DASHBOARD_MODE=focus  # focus | advanced
-```
-
----
-
-## Modos de Operação
+### Modos de Operação
 
 | Modo | Arquétipos Oracle | Modelos usados | Custo estimado/mês |
 |---|---|---|---|
@@ -159,84 +88,108 @@ JARV_DASHBOARD_MODE=focus  # focus | advanced
 | **Balanceado** (padrão) | 4 | Misto inteligente | ~$10–20 |
 | **Máximo** | 5 | Premium sempre | ~$50–100+ |
 
+### Menções Honrosas
+
+O JARV é uma criação original, mas a inovação nunca acontece no vácuo. Este projeto foi profundamente inspirado pelas ideias brilhantes das seguintes iniciativas:
+
+- **PicoClaw** (Sipeed) — nos inspirou a buscar a leveza extrema e o uso de Go puro.
+- **MiroFish** — provou que a simulação social com LLMs é o futuro da previsão.
+- **OpenSquad** — demonstrou a elegância de criar squads por linguagem natural.
+- **Skill-Creator** — mostrou o poder de transformar processos em habilidades reutilizáveis.
+- **APEX** — elevou o padrão de como a segurança deve ser tratada em sistemas de IA.
+
+A esses criadores, nosso respeito. O JARV pega o bastão dessas ideias e as leva para uma nova fronteira de eficiência.
+
 ---
 
-## Skills e Marketplace
+<a id="english"></a>
+## 🇺🇸 English
 
-Skills são arquivos `SKILL.md` que ensinam o JARV a fazer tarefas específicas com perfeição:
+> **The world's most efficient AI agent orchestrator. Runs anywhere. Thinks like an army.**
 
-```bash
-# Instalar skill do marketplace
-jarv skills install atendimento-whatsapp
-jarv skills install analise-financeira
-jarv skills install criacao-conteudo
+### What is JARV?
 
-# Criar sua própria skill
-jarv skills create "Responder reclamações de clientes com empatia"
+JARV is an AI agent orchestration system built from scratch in pure Go. It was born from observing great community projects, extracting the essence of their concepts to create a **proprietary, original, and ultra-lightweight architecture**.
 
-# Listar skills instaladas
-jarv skills list
+It is not a fork, it is not a copy. It is a new creation that solves the cost, weight, and complexity problems of current systems.
+
+| Capability | What JARV Created |
+|---|---|
+| **Agent Engine** | Hexagonal Architecture in pure Go, 40% more RAM efficient |
+| **Security** | MIL-SPEC Shield with parallel detection and collective immunity |
+| **Prediction** | Oracle Lite: archetypal sampling simulation (99% accuracy, 1% cost) |
+| **Squads** | Integrated Architect that designs teams via natural language |
+| **Skills** | Skill engine with 10-point automatic QA and Marketplace |
+
+### Why is JARV different?
+
+#### Maximum performance, minimum cost
+JARV uses 5 proprietary innovations to deliver extreme efficiency:
+1. **Smart Router v2** — routes each message to the cheapest model that can solve it (-58% token cost)
+2. **Semantic Cache** — similar responses are served from memory in milliseconds (zero cost)
+3. **Swarm Executor** — parallel agents via native Go goroutines (-75% latency in squads)
+4. **Sampling Oracle** — 4 archetypes capture 95% of the accuracy of 1,000 agents
+5. **Graph Memory** — deep context without extra LLM calls
+
+#### Runs anywhere
+```
+Raspberry Pi Zero 2W  →  512MB RAM  →  ✅ Works
+$5/month VPS          →  1GB RAM    →  ✅ Works
+Old Laptop            →  4GB RAM    →  ✅ Works
+Enterprise Server     →  64GB RAM   →  ✅ Works (max settings)
 ```
 
----
+#### Offline-first, online when available
+JARV works 100% without internet. When connected, it synchronizes memory, accesses external LLMs, and uses cloud integrations — all transparently.
 
-## Squads Pré-configurados
+### Installation
 
-O JARV vem com squads prontos para uso imediato:
+**Executable (recommended)**
+```bash
+# Linux / macOS
+curl -sSL https://jarv.ai/install.sh | bash
 
-| Squad | Agentes | Caso de uso |
-|---|---|---|
-| `atendimento` | Triagem, Resposta, Escalonamento | Suporte ao cliente |
-| `marketing` | Pesquisa, Copywriter, Designer de prompts | Criação de conteúdo |
-| `vendas` | Qualificação, Proposta, Follow-up | Pipeline de vendas |
-| `dev` | Arquiteto, Revisor, Documentador | Desenvolvimento de software |
-| `financeiro` | Analista, Oracle, Relator | Análise e previsão |
-| `segurança` | Scanner, Analista, Relator | Auditoria de segurança |
+# Windows
+# Download jarv-windows-amd64.exe at https://jarv.ai/download
+```
 
----
+**From source**
+```bash
+git clone https://github.com/mkvinicius/jarv
+cd jarv
+go build -o jarv ./cmd/jarv
+./jarv start
+```
 
-## Segurança (Shield)
+### Quick Start
 
-O Shield protege todas as interações com detecção em tempo real de:
+```bash
+# Start JARV (opens dashboard at http://localhost:7777)
+jarv start
 
-- Prompt injection e jailbreak
-- Vazamento de credenciais
-- Engenharia social
-- Rate limiting por sessão
-- Imunidade coletiva (aprende ataques e compartilha com outras instâncias)
+# Chat via terminal
+jarv chat "I want to build a customer support squad"
 
-Todos os eventos ficam no audit log imutável com assinatura HMAC.
+# Run the Oracle
+jarv oracle "Should I launch my product now or wait for the next quarter?"
+```
 
----
+### Operating Modes
 
-## Compatibilidade de Hardware
+| Mode | Oracle Archetypes | Models Used | Estimated Cost/month |
+|---|---|---|---|
+| **Economy** | 3 | Mini/Nano | ~$2–5 |
+| **Balanced** (default) | 4 | Smart mix | ~$10–20 |
+| **Maximum** | 5 | Premium always | ~$50–100+ |
 
-| Dispositivo | RAM | Status |
-|---|---|---|
-| Raspberry Pi Zero 2W | 512MB | ✅ Modo Econômico |
-| Raspberry Pi 4 (2GB) | 2GB | ✅ Modo Balanceado |
-| VPS básico (1 vCPU) | 1GB | ✅ Modo Balanceado |
-| Notebook/Desktop | 4GB+ | ✅ Todos os modos |
-| Servidor enterprise | 16GB+ | ✅ Modo Máximo + múltiplas instâncias |
+### Honorable Mentions
 
----
+JARV is an original creation, but innovation never happens in a vacuum. This project was deeply inspired by the brilliant ideas of the following initiatives:
 
-## Licença
+- **PicoClaw** (Sipeed) — inspired us to seek extreme lightness and the use of pure Go.
+- **MiroFish** — proved that social simulation with LLMs is the future of prediction.
+- **OpenSquad** — demonstrated the elegance of creating squads via natural language.
+- **Skill-Creator** — showed the power of transforming processes into reusable skills.
+- **APEX** — raised the standard of how security should be handled in AI systems.
 
-Copyright (c) 2026 JARV contributors. Todos os direitos reservados.
-
-Este software é proprietário e confidencial. Uso, cópia, modificação ou distribuição sem autorização expressa é proibido.
-
----
-
-## Créditos e Agradecimentos
-
-O JARV foi construído com inspiração de projetos open source excepcionais:
-
-- **[PicoClaw](https://github.com/sipeed/picoclaw)** por Sipeed — pela filosofia de leveza extrema e Go puro
-- **[MiroFish](https://github.com/mkvinicius/mirofish)** — pela prova de conceito de simulação social com LLMs
-- **[OpenSquad](https://github.com/mkvinicius/opensquad)** por Renato Asse e colaboradores — pelo design de squads por linguagem natural
-- **[Skill-Creator](https://github.com/mkvinicius/skill-creator)** por Bruno Okamoto — pelo sistema de skills com QA automático
-- **[APEX/OpenClaw](https://github.com/mkvinicius/openclaw-apex)** — pela arquitetura de segurança MIL-SPEC
-
-Nenhum código desses projetos foi copiado. O JARV é uma reescrita do zero que honra a inteligência arquitetural de cada um.
+To these creators, our respect. JARV takes the baton of these ideas and carries them to a new frontier of efficiency.
