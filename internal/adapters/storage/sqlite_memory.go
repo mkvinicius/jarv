@@ -1,3 +1,5 @@
+//go:build sqlite
+
 // Package storage provides the SQLite-backed implementations of JARV's storage ports.
 //
 // This file implements the MemoryStore interface using SQLite with a custom

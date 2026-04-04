@@ -170,7 +170,7 @@ func (s *Server) Stop(ctx context.Context) error {
 
 // Broadcast sends a real-time event to all connected dashboard clients.
 func (s *Server) Broadcast(event string, data any) {
-	s.sseHub.broadcast(event, data)
+	s.sseHub.broadcastEvent(event, data)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -305,13 +305,13 @@ func (s *Server) handleOracle(w http.ResponseWriter, r *http.Request) {
 
 	// Run Oracle asynchronously and stream progress via SSE
 	go func() {
-		s.sseHub.broadcast("oracle_start", map[string]string{"scenario": req.Scenario})
+		s.sseHub.broadcastEvent("oracle_start", map[string]string{"scenario": req.Scenario})
 		result, err := s.handlers.RunOracle(r.Context(), req.Scenario, req.Mode)
 		if err != nil {
-			s.sseHub.broadcast("oracle_error", map[string]string{"error": err.Error()})
+			s.sseHub.broadcastEvent("oracle_error", map[string]string{"error": err.Error()})
 			return
 		}
-		s.sseHub.broadcast("oracle_complete", map[string]string{"result": result})
+		s.sseHub.broadcastEvent("oracle_complete", map[string]string{"result": result})
 	}()
 
 	jsonOK(w, map[string]string{"status": "started"})
@@ -498,7 +498,7 @@ func (h *sseHub) unsubscribe(client chan sseMessage) {
 	h.unsubscribe_ <- client
 }
 
-func (h *sseHub) broadcast(event string, data any) {
+func (h *sseHub) broadcastEvent(event string, data any) {
 	jsonData, _ := json.Marshal(data)
 	select {
 	case h.broadcast <- sseMessage{Event: event, Data: string(jsonData)}:

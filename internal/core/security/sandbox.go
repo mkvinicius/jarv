@@ -30,6 +30,20 @@ import (
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Severity levels
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Severity classifies the urgency of a security event or anomaly.
+type Severity string
+
+const (
+	SeverityCritical Severity = "critical"
+	SeverityHigh     Severity = "high"
+	SeverityMedium   Severity = "medium"
+	SeverityLow      Severity = "low"
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Behavioral Anomaly Detection
 // ─────────────────────────────────────────────────────────────────────────────
 

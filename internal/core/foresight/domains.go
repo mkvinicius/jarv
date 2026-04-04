@@ -466,7 +466,7 @@ type SystemMetrics struct {
 }
 
 func NewOperationalAnalyzer(metrics SystemMetrics) *OperationalAnalyzer {
-	return &OperationalAnalyzer{metrics: metrics}
+	return &OperationalAnalyzer{systemMetrics: metrics}
 }
 
 func (a *OperationalAnalyzer) Name() string   { return "operational.analyzer" }
@@ -476,52 +476,52 @@ func (a *OperationalAnalyzer) Collect(_ context.Context) ([]Signal, error) {
 	var signals []Signal
 	now := time.Now()
 
-	if a.metrics.CPUUsagePercent > 80 {
+	if a.systemMetrics.CPUUsagePercent > 80 {
 		signals = append(signals, Signal{
 			Domain:    DomainOperational,
 			Source:    "operational.analyzer",
 			EventType: "cpu_high",
-			Value:     a.metrics.CPUUsagePercent,
+			Value:     a.systemMetrics.CPUUsagePercent,
 			Timestamp: now,
 		})
 	}
 
-	if a.metrics.MemoryUsagePercent > 85 {
+	if a.systemMetrics.MemoryUsagePercent > 85 {
 		signals = append(signals, Signal{
 			Domain:    DomainOperational,
 			Source:    "operational.analyzer",
 			EventType: "memory_pressure",
-			Value:     a.metrics.MemoryUsagePercent,
+			Value:     a.systemMetrics.MemoryUsagePercent,
 			Timestamp: now,
 		})
 	}
 
-	if a.metrics.ErrorRatePercent > 1.0 {
+	if a.systemMetrics.ErrorRatePercent > 1.0 {
 		signals = append(signals, Signal{
 			Domain:    DomainOperational,
 			Source:    "operational.analyzer",
 			EventType: "error_rate_elevated",
-			Value:     a.metrics.ErrorRatePercent,
+			Value:     a.systemMetrics.ErrorRatePercent,
 			Timestamp: now,
 		})
 	}
 
-	if a.metrics.RequestLatencyP99 > 2*time.Second {
+	if a.systemMetrics.RequestLatencyP99 > 2*time.Second {
 		signals = append(signals, Signal{
 			Domain:    DomainOperational,
 			Source:    "operational.analyzer",
 			EventType: "latency_degraded",
-			Value:     float64(a.metrics.RequestLatencyP99.Milliseconds()),
+			Value:     float64(a.systemMetrics.RequestLatencyP99.Milliseconds()),
 			Timestamp: now,
 		})
 	}
 
-	if a.metrics.DiskUsagePercent > 90 {
+	if a.systemMetrics.DiskUsagePercent > 90 {
 		signals = append(signals, Signal{
 			Domain:    DomainOperational,
 			Source:    "operational.analyzer",
 			EventType: "disk_critical",
-			Value:     a.metrics.DiskUsagePercent,
+			Value:     a.systemMetrics.DiskUsagePercent,
 			Timestamp: now,
 		})
 	}

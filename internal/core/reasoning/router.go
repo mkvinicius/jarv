@@ -26,6 +26,8 @@
 package reasoning
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"github.com/mkvinicius/jarv/internal/ports/llm"
@@ -347,6 +349,3 @@ func tierMeetsMinimum(candidate, minimum llm.Tier) bool {
 	return order[candidate] >= order[minimum]
 }
 
-// context import needed for Execute
-import "context"
-import "fmt"
