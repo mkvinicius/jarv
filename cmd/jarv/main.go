@@ -45,6 +45,7 @@ import (
 	"github.com/mkvinicius/jarv/internal/core/skills"
 	"github.com/mkvinicius/jarv/internal/ports/channel"
 	"github.com/mkvinicius/jarv/internal/ports/llm"
+	"github.com/mkvinicius/jarv/internal/tools/docparser"
 	"github.com/mkvinicius/jarv/internal/tools/websearch"
 )
 
@@ -235,6 +236,9 @@ func buildEngine(cfg *Config, skillsMgr *skills.Manager) (*agent.Engine, error) 
 	graph := storagePkg.NewInMemoryGraph()
 	sessions := storagePkg.NewInMemorySessionStore()
 	tools := agent.NewToolRegistry()
+
+	// Register document parser tool (parse_document)
+	tools.Register(&docparser.Tool{})
 
 	// Register web search tools
 	registerSearchTools(tools, cfg)
@@ -516,6 +520,38 @@ func cmdStart(cfg *Config) {
 	if err := cliCh.Start(ctx, func(msg channel.InboundMessage) {
 		// Built-in slash commands
 		if strings.HasPrefix(msg.Text, "/") {
+			// /arquivo <path> <text...> — parse document inline
+			if strings.HasPrefix(msg.Text, "/arquivo ") || strings.HasPrefix(msg.Text, "/file ") {
+				parts := strings.SplitN(msg.Text, " ", 3)
+				if len(parts) < 3 {
+					fmt.Println("Uso: /arquivo <arquivo> <pergunta>")
+					return
+				}
+				docPath := parts[1]
+				question := parts[2]
+				extracted, err := docparser.ParseFile(docPath)
+				if err != nil {
+					fmt.Printf("Erro ao ler arquivo: %v\n", err)
+					return
+				}
+				fileCtx := docparser.FormatForLLM(docPath, extracted, 32000)
+				fmt.Fprintf(os.Stderr, "[documento] %s (%d chars)\n",
+					filepath.Base(docPath), len(extracted))
+				agentReq := agent.Request{
+					SessionID: msg.SessionID,
+					UserID:    msg.Sender.ID,
+					Text:      fileCtx + "\nPergunta: " + question,
+				}
+				resp, err := eng.Process(context.Background(), agentReq)
+				if err != nil {
+					_ = cliCh.Send(context.Background(), channel.OutboundMessage{
+						Text: fmt.Sprintf("Erro: %v", err),
+					})
+					return
+				}
+				_ = cliCh.Send(context.Background(), channel.OutboundMessage{Text: resp.Text})
+				return
+			}
 			// /image <path> <text...> — send image inline
 			if strings.HasPrefix(msg.Text, "/imagem ") || strings.HasPrefix(msg.Text, "/image ") {
 				parts := strings.SplitN(msg.Text, " ", 3)
@@ -593,6 +629,7 @@ Comandos disponíveis:
   /cron                        — listar tarefas agendadas
   /modelos                     — listar modelos configurados
   /imagem <arquivo> <pergunta> — enviar imagem ao agente (visão)
+  /arquivo <arquivo> <pergunta>— analisar documento (PDF/DOCX/XLSX/PPTX/HTML/CSV)
   /limpar                      — limpar a tela
   /sair, /exit                 — encerrar`)
 	case "/status":
@@ -622,10 +659,18 @@ Comandos disponíveis:
 		} else {
 			fmt.Println("[use 'jarv chat --image <arquivo> <pergunta>' para enviar imagens]")
 		}
+	case "/arquivo", "/file":
+		if len(parts) < 3 {
+			fmt.Println("Uso: /arquivo <arquivo> <pergunta>")
+			fmt.Println("Exemplo: /arquivo relatorio.pdf Quais os pontos principais?")
+			fmt.Println("Formatos: PDF, DOCX, XLSX, PPTX, HTML, CSV, TXT, MD")
+		} else {
+			fmt.Println("[use 'jarv chat --file <arquivo> <pergunta>' para analisar documentos]")
+		}
 	}
 }
 
-func cmdChat(cfg *Config, text, imagePath string) {
+func cmdChat(cfg *Config, text, imagePath, filePath string) {
 	skillsMgr := skills.NewManager("")
 	_ = skillsMgr.Load()
 
@@ -650,6 +695,17 @@ func cmdChat(cfg *Config, text, imagePath string) {
 		}
 		req.Images = []llm.ImageData{img}
 		fmt.Fprintf(os.Stderr, "[visão] %s (%s, %d bytes)\n", filepath.Base(imagePath), img.MimeType, len(img.Data))
+	}
+
+	if filePath != "" {
+		extracted, err := docparser.ParseFile(filePath)
+		if err != nil {
+			fatalf("Erro ao ler arquivo: %v\n", err)
+		}
+		fileContext := docparser.FormatForLLM(filePath, extracted, 32000)
+		req.Text = fileContext + "\nPergunta: " + text
+		fmt.Fprintf(os.Stderr, "[documento] %s (%d chars extraídos)\n",
+			filepath.Base(filePath), len(extracted))
 	}
 
 	resp, err := eng.Process(ctx, req)
@@ -908,7 +964,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Comandos:\n")
 		fmt.Fprintf(os.Stderr, "  setup                  — configuração inicial\n")
 		fmt.Fprintf(os.Stderr, "  start                  — modo interativo\n")
-		fmt.Fprintf(os.Stderr, "  chat [--image <f>] <m> — mensagem única (com visão opcional)\n")
+		fmt.Fprintf(os.Stderr, "  chat [--image <f>] [--file <f>] <m> — mensagem com visão/documento\n")
 		fmt.Fprintf(os.Stderr, "  oracle <cenário>       — análise preditiva\n")
 		fmt.Fprintf(os.Stderr, "  status                 — status do sistema\n")
 		fmt.Fprintf(os.Stderr, "  skills list            — listar skills\n")
@@ -943,13 +999,14 @@ func main() {
 
 	case "chat":
 		chatFlags := flag.NewFlagSet("chat", flag.ExitOnError)
-		imagePath := chatFlags.String("image", "", "Caminho para imagem a enviar ao agente")
+		imagePath := chatFlags.String("image", "", "Caminho para imagem a enviar ao agente (visão)")
+		filePath := chatFlags.String("file", "", "Caminho para documento a analisar (PDF, DOCX, XLSX, PPTX, HTML, CSV, TXT)")
 		_ = chatFlags.Parse(rest)
 		chatArgs := chatFlags.Args()
 		if len(chatArgs) == 0 {
-			fatalf("Uso: jarv chat [--image <arquivo>] \"<mensagem>\"\n")
+			fatalf("Uso: jarv chat [--image <arquivo>] [--file <documento>] \"<mensagem>\"\n")
 		}
-		cmdChat(mustLoadConfig(), strings.Join(chatArgs, " "), *imagePath)
+		cmdChat(mustLoadConfig(), strings.Join(chatArgs, " "), *imagePath, *filePath)
 
 	case "oracle":
 		if len(rest) == 0 {
