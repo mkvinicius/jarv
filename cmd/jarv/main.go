@@ -21,9 +21,11 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"mime"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -512,15 +514,60 @@ func cmdStart(cfg *Config) {
 
 	cliCh := cli.New(cfg.Name)
 	if err := cliCh.Start(ctx, func(msg channel.InboundMessage) {
-		// Built-in commands
+		// Built-in slash commands
 		if strings.HasPrefix(msg.Text, "/") {
+			// /image <path> <text...> — send image inline
+			if strings.HasPrefix(msg.Text, "/imagem ") || strings.HasPrefix(msg.Text, "/image ") {
+				parts := strings.SplitN(msg.Text, " ", 3)
+				if len(parts) < 3 {
+					fmt.Println("Uso: /imagem <arquivo> <pergunta>")
+					return
+				}
+				imgPath := parts[1]
+				question := parts[2]
+				imgData, err := loadImage(imgPath)
+				if err != nil {
+					fmt.Printf("Erro ao carregar imagem: %v\n", err)
+					return
+				}
+				fmt.Fprintf(os.Stderr, "[visão] %s (%s, %d bytes)\n",
+					filepath.Base(imgPath), imgData.MimeType, len(imgData.Data))
+				agentReq := agent.Request{
+					SessionID: msg.SessionID,
+					UserID:    msg.Sender.ID,
+					Text:      question,
+					Images:    []llm.ImageData{imgData},
+				}
+				resp, err := eng.Process(context.Background(), agentReq)
+				if err != nil {
+					_ = cliCh.Send(context.Background(), channel.OutboundMessage{
+						Text: fmt.Sprintf("Erro: %v", err),
+					})
+					return
+				}
+				_ = cliCh.Send(context.Background(), channel.OutboundMessage{Text: resp.Text})
+				return
+			}
 			handleCommand(msg.Text, cfg, skillsMgr, sched)
 			return
 		}
+
+		// Build images from message Media (future: drag-and-drop or paste support)
+		var images []llm.ImageData
+		for _, m := range msg.Media {
+			if m.Kind == channel.MediaImage && len(m.Data) > 0 {
+				images = append(images, llm.ImageData{
+					MimeType: m.MimeType,
+					Data:     m.Data,
+				})
+			}
+		}
+
 		resp, err := eng.Process(context.Background(), agent.Request{
 			SessionID: msg.SessionID,
 			UserID:    msg.Sender.ID,
 			Text:      msg.Text,
+			Images:    images,
 		})
 		if err != nil {
 			_ = cliCh.Send(context.Background(), channel.OutboundMessage{
@@ -541,12 +588,13 @@ func handleCommand(text string, cfg *Config, skillsMgr *skills.Manager, sched *s
 	case "/ajuda", "/help":
 		fmt.Println(`
 Comandos disponíveis:
-  /status          — status do sistema
-  /skills          — listar skills instaladas
-  /cron            — listar tarefas agendadas
-  /modelos         — listar modelos configurados
-  /limpar          — limpar a tela
-  /sair, /exit     — encerrar`)
+  /status                      — status do sistema
+  /skills                      — listar skills instaladas
+  /cron                        — listar tarefas agendadas
+  /modelos                     — listar modelos configurados
+  /imagem <arquivo> <pergunta> — enviar imagem ao agente (visão)
+  /limpar                      — limpar a tela
+  /sair, /exit                 — encerrar`)
 	case "/status":
 		printStatus(cfg, skillsMgr, sched)
 	case "/skills":
@@ -567,10 +615,17 @@ Comandos disponíveis:
 		}
 	case "/limpar":
 		fmt.Print("\033[H\033[2J")
+	case "/imagem", "/image":
+		if len(parts) < 3 {
+			fmt.Println("Uso: /imagem <arquivo> <pergunta>")
+			fmt.Println("Exemplo: /imagem foto.jpg O que você vê nesta imagem?")
+		} else {
+			fmt.Println("[use 'jarv chat --image <arquivo> <pergunta>' para enviar imagens]")
+		}
 	}
 }
 
-func cmdChat(cfg *Config, text string) {
+func cmdChat(cfg *Config, text, imagePath string) {
 	skillsMgr := skills.NewManager("")
 	_ = skillsMgr.Load()
 
@@ -582,11 +637,22 @@ func cmdChat(cfg *Config, text string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	resp, err := eng.Process(ctx, agent.Request{
+	req := agent.Request{
 		SessionID: "oneshot-" + uuid.NewString()[:8],
 		UserID:    "user",
 		Text:      text,
-	})
+	}
+
+	if imagePath != "" {
+		img, err := loadImage(imagePath)
+		if err != nil {
+			fatalf("Erro ao carregar imagem: %v\n", err)
+		}
+		req.Images = []llm.ImageData{img}
+		fmt.Fprintf(os.Stderr, "[visão] %s (%s, %d bytes)\n", filepath.Base(imagePath), img.MimeType, len(img.Data))
+	}
+
+	resp, err := eng.Process(ctx, req)
 	if err != nil {
 		fatalf("Erro: %v\n", err)
 	}
@@ -842,7 +908,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Comandos:\n")
 		fmt.Fprintf(os.Stderr, "  setup                  — configuração inicial\n")
 		fmt.Fprintf(os.Stderr, "  start                  — modo interativo\n")
-		fmt.Fprintf(os.Stderr, "  chat <mensagem>        — mensagem única\n")
+		fmt.Fprintf(os.Stderr, "  chat [--image <f>] <m> — mensagem única (com visão opcional)\n")
 		fmt.Fprintf(os.Stderr, "  oracle <cenário>       — análise preditiva\n")
 		fmt.Fprintf(os.Stderr, "  status                 — status do sistema\n")
 		fmt.Fprintf(os.Stderr, "  skills list            — listar skills\n")
@@ -876,10 +942,14 @@ func main() {
 		cmdStart(cfg)
 
 	case "chat":
-		if len(rest) == 0 {
-			fatalf("Uso: jarv chat \"<mensagem>\"\n")
+		chatFlags := flag.NewFlagSet("chat", flag.ExitOnError)
+		imagePath := chatFlags.String("image", "", "Caminho para imagem a enviar ao agente")
+		_ = chatFlags.Parse(rest)
+		chatArgs := chatFlags.Args()
+		if len(chatArgs) == 0 {
+			fatalf("Uso: jarv chat [--image <arquivo>] \"<mensagem>\"\n")
 		}
-		cmdChat(mustLoadConfig(), strings.Join(rest, " "))
+		cmdChat(mustLoadConfig(), strings.Join(chatArgs, " "), *imagePath)
 
 	case "oracle":
 		if len(rest) == 0 {
@@ -925,6 +995,42 @@ func skillsDir() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".jarv", "skills")
 }
+
+// loadImage reads an image file from disk and returns an ImageData for vision models.
+func loadImage(path string) (llm.ImageData, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return llm.ImageData{}, fmt.Errorf("imagem: %w", err)
+	}
+
+	// Detect MIME type from extension
+	ext := strings.ToLower(filepath.Ext(path))
+	mimeType := mime.TypeByExtension(ext)
+	if mimeType == "" {
+		// Fallback: detect by magic bytes
+		switch {
+		case len(data) >= 3 && data[0] == 0xFF && data[1] == 0xD8:
+			mimeType = "image/jpeg"
+		case len(data) >= 8 && string(data[1:4]) == "PNG":
+			mimeType = "image/png"
+		case len(data) >= 6 && (string(data[:6]) == "GIF87a" || string(data[:6]) == "GIF89a"):
+			mimeType = "image/gif"
+		case len(data) >= 4 && string(data[:4]) == "RIFF":
+			mimeType = "image/webp"
+		default:
+			mimeType = "image/jpeg" // safe default
+		}
+	}
+	// Strip parameters from MIME type (e.g. "image/jpeg; charset=...")
+	if idx := strings.IndexByte(mimeType, ';'); idx >= 0 {
+		mimeType = strings.TrimSpace(mimeType[:idx])
+	}
+
+	return llm.ImageData{MimeType: mimeType, Data: data}, nil
+}
+
+// encodeImageBase64 is kept for reference but image encoding is done inside each adapter.
+var _ = base64.StdEncoding.EncodeToString
 
 func truncate(s string, n int) string {
 	if len(s) <= n {

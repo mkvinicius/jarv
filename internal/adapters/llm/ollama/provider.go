@@ -12,6 +12,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -89,7 +90,7 @@ func (p *Provider) Complete(ctx context.Context, req llm.Request) (*llm.Response
 		model = p.model
 	}
 
-	msgs := convertMessages(req.Messages)
+	msgs := convertMessages(req.Messages, req.Images)
 	body := ollamaRequest{
 		Model:    model,
 		Messages: msgs,
@@ -153,7 +154,7 @@ func (p *Provider) Stream(ctx context.Context, req llm.Request) (<-chan llm.Stre
 
 	body := ollamaRequest{
 		Model:    model,
-		Messages: convertMessages(req.Messages),
+		Messages: convertMessages(req.Messages, req.Images),
 		Stream:   true,
 	}
 	data, err := json.Marshal(body)
@@ -261,8 +262,9 @@ type ollamaRequest struct {
 }
 
 type ollamaMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content"`
+	Images  []string `json:"images,omitempty"` // base64-encoded images for vision models (llava, moondream)
 }
 
 type ollamaResponse struct {
@@ -272,13 +274,27 @@ type ollamaResponse struct {
 	Done            bool          `json:"done"`
 }
 
-func convertMessages(msgs []llm.Message) []ollamaMessage {
+func convertMessages(msgs []llm.Message, images []llm.ImageData) []ollamaMessage {
 	out := make([]ollamaMessage, 0, len(msgs))
-	for _, m := range msgs {
-		out = append(out, ollamaMessage{
+	// Find index of last user message for image attachment
+	lastUserIdx := -1
+	for i, m := range msgs {
+		if m.Role == llm.RoleUser {
+			lastUserIdx = i
+		}
+	}
+	for i, m := range msgs {
+		om := ollamaMessage{
 			Role:    string(m.Role),
 			Content: m.Content,
-		})
+		}
+		// Attach images to the last user message
+		if m.Role == llm.RoleUser && len(images) > 0 && i == lastUserIdx {
+			for _, img := range images {
+				om.Images = append(om.Images, base64.StdEncoding.EncodeToString(img.Data))
+			}
+		}
+		out = append(out, om)
 	}
 	return out
 }

@@ -55,10 +55,18 @@ type ToolDefinition struct {
 	Parameters  any    `json:"parameters"` // JSON Schema object
 }
 
+// ImageData carries an image to be sent to a vision-capable model.
+// The image is stored as raw bytes and will be base64-encoded per provider spec.
+type ImageData struct {
+	MimeType string // e.g. "image/jpeg", "image/png", "image/gif", "image/webp"
+	Data     []byte // raw image bytes
+}
+
 // Request encapsulates everything needed for a single LLM call.
 type Request struct {
 	Model       string           // model identifier (e.g., "gpt-4o", "claude-3-5-sonnet")
 	Messages    []Message        // conversation history
+	Images      []ImageData      // images for vision models (attached to the last user message)
 	Tools       []ToolDefinition // available tools (nil = no tools)
 	MaxTokens   int              // 0 = provider default
 	Temperature float64          // 0.0 = deterministic, 1.0 = creative

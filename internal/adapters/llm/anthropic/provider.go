@@ -8,6 +8,7 @@ package anthropic
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -155,7 +156,20 @@ type anRequest struct {
 
 type anMessage struct {
 	Role    string `json:"role"`
-	Content string `json:"content"`
+	Content any    `json:"content"` // string or []anContentBlock for vision
+}
+
+// anContentBlock is a single element in a multi-part Anthropic message.
+type anContentBlock struct {
+	Type   string          `json:"type"`
+	Text   string          `json:"text,omitempty"`
+	Source *anImageSource  `json:"source,omitempty"`
+}
+
+type anImageSource struct {
+	Type      string `json:"type"`       // "base64"
+	MediaType string `json:"media_type"` // e.g. "image/jpeg"
+	Data      string `json:"data"`       // base64-encoded bytes
 }
 
 type anTool struct {
@@ -192,15 +206,39 @@ func (p *Provider) buildRequest(model string, req llm.Request) anRequest {
 		ar.MaxTokens = defaultMaxTokens
 	}
 
-	for _, m := range req.Messages {
+	// Find index of last user message for image attachment
+	lastUserIdx := -1
+	for i, m := range req.Messages {
+		if m.Role == llm.RoleUser {
+			lastUserIdx = i
+		}
+	}
+
+	for i, m := range req.Messages {
 		if m.Role == llm.RoleSystem {
 			ar.System = m.Content
 			continue
 		}
-		ar.Messages = append(ar.Messages, anMessage{
-			Role:    string(m.Role),
-			Content: m.Content,
-		})
+		msg := anMessage{Role: string(m.Role)}
+		// Attach images to the last user message
+		if m.Role == llm.RoleUser && len(req.Images) > 0 && i == lastUserIdx {
+			var blocks []anContentBlock
+			for _, img := range req.Images {
+				blocks = append(blocks, anContentBlock{
+					Type: "image",
+					Source: &anImageSource{
+						Type:      "base64",
+						MediaType: img.MimeType,
+						Data:      base64.StdEncoding.EncodeToString(img.Data),
+					},
+				})
+			}
+			blocks = append(blocks, anContentBlock{Type: "text", Text: m.Content})
+			msg.Content = blocks
+		} else {
+			msg.Content = m.Content
+		}
+		ar.Messages = append(ar.Messages, msg)
 	}
 
 	for _, td := range req.Tools {

@@ -8,10 +8,12 @@ package openai
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mkvinicius/jarv/internal/ports/llm"
@@ -129,7 +131,7 @@ func (p *Provider) Complete(ctx context.Context, req llm.Request) (*llm.Response
 
 	msg := resp.Choices[0].Message
 	out := &llm.Response{
-		Content: msg.Content,
+		Content: extractTextContent(msg.Content),
 		Model:   resp.Model,
 		Latency: time.Since(start),
 		Usage: llm.TokenUsage{
@@ -179,9 +181,21 @@ type oaRequest struct {
 
 type oaMessage struct {
 	Role       string        `json:"role"`
-	Content    string        `json:"content,omitempty"`
+	Content    any           `json:"content,omitempty"` // string or []oaContentPart for vision
 	ToolCallID string        `json:"tool_call_id,omitempty"`
 	ToolCalls  []oaToolCall  `json:"tool_calls,omitempty"`
+}
+
+// oaContentPart is a single element in a multi-part message (text or image).
+type oaContentPart struct {
+	Type     string          `json:"type"`
+	Text     string          `json:"text,omitempty"`
+	ImageURL *oaImageURL     `json:"image_url,omitempty"`
+}
+
+type oaImageURL struct {
+	URL    string `json:"url"`
+	Detail string `json:"detail,omitempty"` // "auto", "low", "high"
 }
 
 type oaTool struct {
@@ -224,7 +238,7 @@ type oaUsage struct {
 
 func (p *Provider) buildRequest(model string, req llm.Request, stream bool) oaRequest {
 	msgs := make([]oaMessage, 0, len(req.Messages))
-	for _, m := range req.Messages {
+	for i, m := range req.Messages {
 		om := oaMessage{
 			Role:       string(m.Role),
 			Content:    m.Content,
@@ -239,6 +253,18 @@ func (p *Provider) buildRequest(model string, req llm.Request, stream bool) oaRe
 					Arguments: tc.Args,
 				},
 			})
+		}
+		// Attach images to the last user message
+		if m.Role == llm.RoleUser && len(req.Images) > 0 && i == lastUserIndex(req.Messages) {
+			parts := []oaContentPart{{Type: "text", Text: m.Content}}
+			for _, img := range req.Images {
+				dataURL := "data:" + img.MimeType + ";base64," + base64.StdEncoding.EncodeToString(img.Data)
+				parts = append(parts, oaContentPart{
+					Type:     "image_url",
+					ImageURL: &oaImageURL{URL: dataURL, Detail: "auto"},
+				})
+			}
+			om.Content = parts
 		}
 		msgs = append(msgs, om)
 	}
@@ -284,6 +310,36 @@ func estimateCost(model string, promptTok, completionTok int) float64 {
 		promptPrice, completionPrice = 0.0010, 0.0020
 	}
 	return float64(promptTok)/1000*promptPrice + float64(completionTok)/1000*completionPrice
+}
+
+// extractTextContent converts the response content (string or content-block array) to plain text.
+func extractTextContent(content any) string {
+	switch v := content.(type) {
+	case string:
+		return v
+	case []any:
+		var sb strings.Builder
+		for _, item := range v {
+			if m, ok := item.(map[string]any); ok {
+				if t, _ := m["text"].(string); t != "" {
+					sb.WriteString(t)
+				}
+			}
+		}
+		return sb.String()
+	default:
+		return ""
+	}
+}
+
+// lastUserIndex returns the index of the last user message in msgs.
+func lastUserIndex(msgs []llm.Message) int {
+	for i := len(msgs) - 1; i >= 0; i-- {
+		if msgs[i].Role == llm.RoleUser {
+			return i
+		}
+	}
+	return -1
 }
 
 func contains(s, sub string) bool {

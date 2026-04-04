@@ -44,6 +44,7 @@ type Request struct {
 	SessionID   string            // conversation session identifier
 	UserID      string            // who is sending this message
 	Text        string            // the user's message
+	Images      []llm.ImageData   // images for vision models
 	MediaRefs   []string          // references to attached media
 	SquadID     string            // which squad handles this (empty = default)
 	Metadata    map[string]string // channel-specific metadata
@@ -309,7 +310,7 @@ func (e *Engine) ActiveRequests() int64 {
 func (e *Engine) extractSignal(ctx context.Context, req Request) llm.IntentSignal {
 	signal := llm.IntentSignal{
 		TokenEstimate:  estimateTokens(req.Text),
-		HasAttachments: len(req.MediaRefs) > 0,
+		HasAttachments: len(req.MediaRefs) > 0 || len(req.Images) > 0,
 		HasCodeBlocks:  strings.Contains(req.Text, "```"),
 	}
 
@@ -443,6 +444,7 @@ func (e *Engine) runLoop(
 	for iteration := 0; iteration < e.cfg.MaxIterations; iteration++ {
 		llmReq := llm.Request{
 			Messages: messages,
+			Images:   req.Images,
 			Tools:    e.tools.Definitions(),
 			Stream:   req.StreamCh != nil,
 		}
