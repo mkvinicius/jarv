@@ -45,6 +45,7 @@ func (c *JARVFallbackChain) Execute(ctx context.Context, req Request) (*Response
 		}
 
 		// Try this candidate
+		req.Model = candidate.Model
 		resp, err := candidate.Provider.Complete(ctx, req)
 		if err == nil {
 			// Success! Track usage
