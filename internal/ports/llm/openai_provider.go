@@ -38,7 +38,7 @@ func NewOpenAIProvider(apiKey, baseURL string) (*OpenAIProvider, error) {
 		apiKey:  apiKey,
 		baseURL: strings.TrimSuffix(baseURL, "/"),
 		client: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 300 * time.Second,
 		},
 	}, nil
 }

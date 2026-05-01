@@ -206,7 +206,17 @@ Responda em %s. Seja específico e realista — evite arquétipos genéricos.`,
 		return nil, llm.TokenUsage{}, err
 	}
 
-	archetypes := parseArchetypes(resp.Content)
+	// Strip <think> tags from reasoning models (MiniMax, DeepSeek, etc)
+	cleanContent := resp.Content
+	if idx := strings.LastIndex(cleanContent, "</think>"); idx != -1 {
+		cleanContent = strings.TrimSpace(cleanContent[idx+len("</think>"):])
+	}
+	fmt.Printf("RAW:\n%s\nEND_RAW\n", cleanContent[:min(500, len(cleanContent))])
+	archetypes := parseArchetypes(cleanContent)
+	fmt.Printf("ARCHETYPES COUNT: %d\n", len(archetypes))
+	for i, a := range archetypes {
+		fmt.Printf("  [%d] Name=%q Role=%q\n", i, a.Name, a.Role)
+	}
 	return archetypes, resp.Usage, nil
 }
 
@@ -383,6 +393,7 @@ Responda em %s. Seja específico e baseie tudo na simulação, não em conhecime
 
 // FormatReport generates a human-readable Markdown report from a prediction.
 func FormatReport(p *Prediction) string {
+	fmt.Printf("FormatReport: archetypes=%d predictions=%d consensus=%d\n", len(p.Archetypes), len(p.Predictions), len(p.Consensus))
 	var sb strings.Builder
 
 	sb.WriteString("# Relatório Oracle JARV\n\n")
@@ -478,7 +489,21 @@ func tierForMode(mode Mode) llm.Tier {
 // Parsing Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+func min(a, b int) int {
+	if a < b { return a }
+	return b
+}
+
+func stripMarkdown(s string) string {
+	s = strings.ReplaceAll(s, "**", "")
+	s = strings.ReplaceAll(s, "*", "")
+	s = strings.ReplaceAll(s, "\"", "")
+	s = strings.TrimSpace(s)
+	return s
+}
+
 func parseArchetypes(text string) []Archetype {
+	text = stripMarkdown(text)
 	var archetypes []Archetype
 	blocks := strings.Split(text, "---ARQUÉTIPO---")
 
