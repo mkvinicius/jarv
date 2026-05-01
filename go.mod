@@ -1,38 +1,36 @@
 module github.com/mkvinicius/jarv
 
-go 1.23
+go 1.21
 
 require (
-	// Core HTTP and WebSocket
-	github.com/gorilla/websocket v1.5.3
-
-	// LLM Providers (OpenAI-compatible + Anthropic)
-	github.com/openai/openai-go/v3 v3.22.0
-	github.com/anthropics/anthropic-sdk-go v1.26.0
-
-	// Messaging channels (loaded conditionally via build tags)
-	github.com/mymmrac/telego v1.7.0
-	go.mau.fi/whatsmeow v0.0.0-20260219150138-7ae702b1eed4
-
-	// Local storage
-	modernc.org/sqlite v1.46.1
-
-	// Scheduling
-	github.com/adhocore/gronx v1.19.6
-
-	// CLI
-	github.com/spf13/cobra v1.10.2
+	// Utilities
+	github.com/google/uuid v1.6.0
 
 	// Logging
 	github.com/rs/zerolog v1.34.0
 
-	// MCP Protocol
-	github.com/modelcontextprotocol/go-sdk v1.3.1
-
-	// Utilities
-	github.com/google/uuid v1.6.0
-	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
-	golang.org/x/crypto v0.48.0
-	golang.org/x/term v0.40.0
+	// CLI
+	github.com/spf13/cobra v1.10.2
+	golang.org/x/crypto v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
+
+	// Local storage
+	modernc.org/sqlite v1.33.0
+)
+
+require (
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
+	modernc.org/mathutil v1.6.0 // indirect
+	modernc.org/memory v1.8.0 // indirect
+	modernc.org/strutil v1.2.0 // indirect
+	modernc.org/token v1.1.0 // indirect
 )

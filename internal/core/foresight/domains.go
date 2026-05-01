@@ -452,7 +452,7 @@ func ProductPatterns() []Pattern {
 
 // OperationalAnalyzer monitors system health, performance, and infrastructure signals.
 type OperationalAnalyzer struct {
-	systemMetrics SystemMetrics
+	metrics SystemMetrics
 }
 
 // SystemMetrics holds real-time system performance data.

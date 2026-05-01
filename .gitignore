@@ -1,0 +1,48 @@
+# JARV - Just A Reasoning Vector
+# Copyright (c) 2026 JARV contributors
+
+# Binary output
+jarv
+jarv.exe
+*.exe
+
+# Data directory (SQLite databases)
+.jarv/
+*.db
+*.db-wal
+*.db-shm
+
+# Config (user-specific)
+config.yaml
+!.config.yaml.example
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Go
+vendor/
+*.test
+coverage.txt
+
+# Secrets (never commit these)
+.env
+*.pem
+*.key
+secrets/

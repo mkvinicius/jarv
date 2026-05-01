@@ -27,6 +27,19 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/mkvinicius/jarv/internal/core/foresight"
+)
+
+// Re-export foresight severity constants so sandbox.go can use them directly.
+type Severity = foresight.Severity
+
+const (
+	SeverityCritical = foresight.SeverityCritical
+	SeverityHigh     = foresight.SeverityHigh
+	SeverityMedium   = foresight.SeverityMedium
+	SeverityLow      = foresight.SeverityLow
+	SeverityInfo     = foresight.SeverityInfo
 )
 
 // ─────────────────────────────────────────────────────────────────────────────

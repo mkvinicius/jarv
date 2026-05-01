@@ -155,7 +155,7 @@ func buildPatternDatabase() []injectionPattern {
 		// ── System Prompt Hijack ─────────────────────────────────────────────
 		{
 			name:     "ignore_previous",
-			pattern:  `(?i)(ignore|disregard|forget|override|bypass)\s+(all\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|context|rules?|guidelines?)`,
+			pattern:  `(?i)(ignore|disregard|forget|override|bypass)\s+(your\s+)?(all\s+)?(previous|prior|above|earlier|instructions?|prompts?|context|rules?|guidelines?)`,
 			severity: "critical",
 			vtype:    ViolationSystemPromptHijack,
 		},
@@ -167,7 +167,7 @@ func buildPatternDatabase() []injectionPattern {
 		},
 		{
 			name:     "act_as_override",
-			pattern:  `(?i)(act\s+as|pretend\s+(you\s+are|to\s+be)|you\s+are\s+now|from\s+now\s+on\s+you\s+(are|will))\s+(a\s+)?(different|unrestricted|unfiltered|jailbroken|evil|dan|dna)`,
+			pattern:  `(?i)(act\s+as|pretend\s+(you\s+are|to\s+be)|you\s+are\s+now)\s+(?:an?\s+)?(different|unrestricted|unfiltered|jailbroken|evil|dan|dna)`,
 			severity: "critical",
 			vtype:    ViolationSystemPromptHijack,
 		},
@@ -179,7 +179,7 @@ func buildPatternDatabase() []injectionPattern {
 		},
 		{
 			name:     "prompt_leak",
-			pattern:  `(?i)(print|output|show|reveal|display|repeat|tell\s+me)\s+(your\s+)?(system\s+prompt|instructions?|initial\s+prompt|original\s+prompt|configuration)`,
+			pattern:  `(?i)(print|output|show|reveal|display|repeat|tell\s+me)\s+(?:me\s+your\s+|your\s+)?(system\s+prompt|instructions?|initial\s+prompt|original\s+prompt|original\s+configuration|configuration)`,
 			severity: "high",
 			vtype:    ViolationSystemPromptHijack,
 		},
@@ -199,7 +199,7 @@ func buildPatternDatabase() []injectionPattern {
 		},
 		{
 			name:     "constraint_bypass",
-			pattern:  `(?i)(without\s+(restrictions?|limitations?|filters?|guidelines?|rules?|constraints?)|bypass\s+(safety|filter|restriction|guideline))`,
+			pattern:  `(?i)(without(\s+(any|your|all|some))?\s+(restrictions?|limitations?|filters?|guidelines?|rules?|constraints?)|bypass\s+(safety|filter|restriction|guideline))`,
 			severity: "high",
 			vtype:    ViolationInstructionOverride,
 		},
@@ -213,7 +213,7 @@ func buildPatternDatabase() []injectionPattern {
 		// ── Exfiltration Attempts ────────────────────────────────────────────
 		{
 			name:     "api_key_fishing",
-			pattern:  `(?i)(api[\s_-]?key|secret[\s_-]?key|access[\s_-]?token|bearer[\s_-]?token|auth[\s_-]?token)\s*(is|=|:)`,
+			pattern:  `(?i)(api[\s_-]?key|secret[\s_-]?key|access[\s_-]?token|bearer[\s_-]?token|auth[\s_-]?token)(\s+[a-z]+\s+|\s*)(is|=|:)`,
 			severity: "high",
 			vtype:    ViolationExfiltrationAttempt,
 		},
@@ -231,12 +231,8 @@ func buildPatternDatabase() []injectionPattern {
 		},
 
 		// ── Context Manipulation ─────────────────────────────────────────────
-		{
-			name:     "context_stuffing",
-			pattern:  `(.)\1{200,}`, // 200+ repeated characters
-			severity: "medium",
-			vtype:    ViolationContextManipulation,
-		},
+		// Note: Repeated-char detection is handled in validateRepeatedChars()
+		// (Go regexp lacks backreferences, so we use a code check instead).
 		{
 			name:     "invisible_text",
 			pattern:  `[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]`, // Control characters
@@ -363,6 +359,15 @@ func (v *InputValidator) Validate(ctx context.Context, input string) ValidationR
 		}
 	}
 
+	// Context manipulation: detect repeated-character stuffing.
+	// Uses code instead of regex because Go regexp lacks backreferences.
+	viol := v.detectRepeatedChars(input)
+	if viol != nil {
+		result.Violations = append(result.Violations, *viol)
+		result.RiskScore += 0.15
+		v.recordViolation(ViolationContextManipulation)
+	}
+
 	// Cap risk score at 1.0.
 	if result.RiskScore > 1.0 {
 		result.RiskScore = 1.0
@@ -377,7 +382,7 @@ func (v *InputValidator) Validate(ctx context.Context, input string) ValidationR
 		}
 	}
 
-	if hasCritical || result.RiskScore >= 0.7 {
+	if hasCritical || result.RiskScore >= 0.3 {
 		result.Valid = false
 	} else if v.cfg.StrictMode && result.RiskScore >= 0.3 {
 		result.Valid = false
@@ -493,6 +498,30 @@ func (v *InputValidator) sanitize(input string) string {
 		}
 	}
 	return strings.TrimSpace(sb.String())
+}
+
+// detectRepeatedChars finds inputs with 200+ consecutive repeated characters,
+// which is a context-stuffing attack pattern.
+func (v *InputValidator) detectRepeatedChars(input string) *ValidationViolation {
+	const maxRun = 200
+	runLen := 1
+	for i := 1; i < len(input); i++ {
+		if input[i] == input[i-1] {
+			runLen++
+			if runLen >= maxRun {
+			return &ValidationViolation{
+				Type:        ViolationContextManipulation,
+				Severity:    "critical",
+				Description: fmt.Sprintf("repeated character run of %d detected", runLen),
+					Position:    i - runLen + 1,
+					Excerpt:     safeExcerpt(input, i-runLen+1, i+1),
+				}
+			}
+		} else {
+			runLen = 1
+		}
+	}
+	return nil
 }
 
 func (v *InputValidator) recordViolation(vtype ViolationType) {
