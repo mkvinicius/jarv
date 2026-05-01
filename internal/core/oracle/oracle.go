@@ -211,12 +211,7 @@ Responda em %s. Seja específico e realista — evite arquétipos genéricos.`,
 	if idx := strings.LastIndex(cleanContent, "</think>"); idx != -1 {
 		cleanContent = strings.TrimSpace(cleanContent[idx+len("</think>"):])
 	}
-	fmt.Printf("RAW:\n%s\nEND_RAW\n", cleanContent[:min(500, len(cleanContent))])
 	archetypes := parseArchetypes(cleanContent)
-	fmt.Printf("ARCHETYPES COUNT: %d\n", len(archetypes))
-	for i, a := range archetypes {
-		fmt.Printf("  [%d] Name=%q Role=%q\n", i, a.Name, a.Role)
-	}
 	return archetypes, resp.Usage, nil
 }
 
@@ -393,7 +388,6 @@ Responda em %s. Seja específico e baseie tudo na simulação, não em conhecime
 
 // FormatReport generates a human-readable Markdown report from a prediction.
 func FormatReport(p *Prediction) string {
-	fmt.Printf("FormatReport: archetypes=%d predictions=%d consensus=%d\n", len(p.Archetypes), len(p.Predictions), len(p.Consensus))
 	var sb strings.Builder
 
 	sb.WriteString("# Relatório Oracle JARV\n\n")
@@ -535,12 +529,14 @@ func parseArchetypes(text string) []Archetype {
 func parseSynthesis(text string) *synthesisResult {
 	result := &synthesisResult{Confidence: 0.7}
 
-	sections := map[string]*[]string{
-		"CONSENSOS:":     &result.Consensus,
-		"CONFLITOS:":     &result.Conflicts,
-		"PREVISÕES:":     &result.Predictions,
-		"RISCOS:":        &result.Risks,
-		"OPORTUNIDADES:": &result.Opportunities,
+	// Flexible parser — works with markdown and plain text
+	keywords := map[string]*[]string{
+		"CONSENSO":     &result.Consensus,
+		"CONFLITO":     &result.Conflicts,
+		"PREVISÃO":     &result.Predictions,
+		"PREVISAO":     &result.Predictions,
+		"RISCO":        &result.Risks,
+		"OPORTUNIDADE": &result.Opportunities,
 	}
 
 	lines := strings.Split(text, "\n")
@@ -548,42 +544,56 @@ func parseSynthesis(text string) *synthesisResult {
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		line = strings.ReplaceAll(line, "**", "")
+		line = strings.ReplaceAll(line, "*", "")
+
+		if line == "" || line == "---" {
+			continue
+		}
 
 		// Check for section header
 		matched := false
-		for header, section := range sections {
-			if strings.HasPrefix(strings.ToUpper(line), header) {
+		upper := strings.ToUpper(line)
+		for keyword, section := range keywords {
+			if strings.Contains(upper, keyword) && (strings.HasSuffix(line, ":") || strings.HasPrefix(line, "#")) {
 				currentSection = section
 				matched = true
 				break
 			}
 		}
+
 		if matched {
 			continue
 		}
 
-		// Parse confidence
-		if strings.HasPrefix(strings.ToUpper(line), "CONFIANÇA:") {
-			var conf float32
-			fmt.Sscanf(strings.TrimPrefix(strings.ToUpper(line), "CONFIANÇA:"), " %f", &conf)
-			if conf > 1 {
-				conf = conf / 100
-			}
-			result.Confidence = conf
-			continue
-		}
-
-		// Add item to current section
-		if currentSection != nil && strings.HasPrefix(line, "-") {
-			item := strings.TrimSpace(strings.TrimPrefix(line, "-"))
-			if item != "" {
+		// Add to current section
+		if currentSection != nil {
+			item := strings.TrimPrefix(line, "- ")
+			item = strings.TrimPrefix(item, "• ")
+			item = strings.TrimSpace(item)
+			if len(item) > 10 {
 				*currentSection = append(*currentSection, item)
+			}
+		}
+	}
+
+	// If nothing parsed, extract key sentences as predictions
+	if len(result.Predictions) == 0 && len(result.Consensus) == 0 {
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			line = strings.ReplaceAll(line, "**", "")
+			if len(line) > 30 && !strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "---") {
+				result.Predictions = append(result.Predictions, line)
+				if len(result.Predictions) >= 5 {
+					break
+				}
 			}
 		}
 	}
 
 	return result
 }
+
 
 func buildArchetypeContext(archetypes []Archetype) string {
 	var sb strings.Builder
