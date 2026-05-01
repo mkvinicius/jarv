@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  jarv:
+    build: ..
+    ports:
+      - "7777:7777"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    volumes:
+      - jarv-data:/root/.jarv
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  jarv-data:
+  ollama-data:

@@ -1,198 +1,327 @@
-# JARV — Just A Rather Very intelligent agent
+# JARV - AI Agent Framework
 
-*Read this in other languages: [English](#english) | [Português](#português)*
+JARV is a production-ready AI agent framework written in Go, designed for building intelligent agents with tool use, conversation management, and extensible plugin architecture.
 
----
+## Features
 
-<a id="português"></a>
-## 🇧🇷 Português
+- **Modular Architecture**: Clean separation between core logic, ports (adapters), and infrastructure
+- **Multiple LLM Providers**: Support for Ollama, OpenAI, Anthropic, and more
+- **MCP Server**: Built-in Model Context Protocol server for tool integration
+- **Plugin System**: Extend JARV with custom tools via Go plugins (.so)
+- **Rate Limiting**: Token bucket rate limiter with circuit breaker pattern
+- **Conversation Memory**: Persistent conversation history and context management
+- **Oracle Mode**: Scenario-based agent evaluation and testing
+- **Prometheus Metrics**: Built-in metrics endpoint for monitoring
+- **Docker Support**: Ready for containerized deployments
 
-> **O orquestrador de agentes mais eficiente do mundo. Roda em qualquer lugar. Pensa como um exército.**
+## Quick Start
 
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev)
-[![License](https://img.shields.io/badge/License-Proprietary-red?style=flat)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows%20%7C%20Raspberry%20Pi-blue?style=flat)](https://github.com/mkvinicius/jarv)
+### Prerequisites
 
-### O que é o JARV?
+- Go 1.23+
+- Ollama (for local LLM) or an API key for cloud providers
 
-O JARV é um sistema de orquestração de agentes de IA construído do zero em Go puro. Ele nasceu da observação de grandes projetos da comunidade, extraindo a essência de seus conceitos para criar uma **arquitetura proprietária, original e ultra-leve**.
+### Using Ollama (Recommended)
 
-Não é um fork, não é uma cópia. É uma criação nova que resolve os problemas de custo, peso e complexidade dos sistemas atuais.
-
-| Capacidade | O que o JARV criou |
-|---|---|
-| **Motor de Agentes** | Arquitetura Hexagonal em Go puro, 40% mais eficiente em RAM |
-| **Segurança** | Shield MIL-SPEC com detecção paralela e imunidade coletiva |
-| **Previsão** | Oracle Lite: simulação por amostragem arquetípica (99% de precisão, 1% do custo) |
-| **Squads** | Arquiteto integrado que desenha equipes via linguagem natural |
-| **Skills** | Motor de habilidades com QA automático de 10 pontos e Marketplace |
-
-### Por que o JARV é diferente?
-
-#### Desempenho máximo, custo mínimo
-O JARV usa 5 inovações proprietárias para entregar eficiência extrema:
-1. **Smart Router v2** — roteia cada mensagem para o modelo mais barato que consegue resolvê-la (-58% em tokens)
-2. **Cache Semântico** — respostas similares são servidas da memória em milissegundos (custo zero)
-3. **Swarm Executor** — agentes paralelos via goroutines nativas do Go (-75% de latência em squads)
-4. **Oracle por Amostragem** — 4 arquétipos capturam 95% da precisão de 1.000 agentes
-5. **Memória com Grafo** — contexto profundo sem chamadas extras ao LLM
-
-#### Roda em qualquer lugar
-```
-Raspberry Pi Zero 2W  →  512MB RAM  →  ✅ Funciona
-VPS de R$30/mês       →  1GB RAM    →  ✅ Funciona
-Notebook antigo       →  4GB RAM    →  ✅ Funciona
-Servidor enterprise   →  64GB RAM   →  ✅ Funciona (com tudo no máximo)
-```
-
-#### Offline-first, online quando disponível
-O JARV funciona 100% sem internet. Quando conectado, sincroniza memória, acessa LLMs externos e usa integrações cloud — tudo de forma transparente.
-
-### Instalação
-
-> 📖 **[Veja o Guia de Instalação Completo (INSTALL.md)](INSTALL.md)** para instruções detalhadas para Mac (Apple Silicon/Intel), Windows, Linux e Raspberry Pi, além de requisitos de hardware.
-
-
-**Executável (recomendado)**
+1. Install Ollama:
 ```bash
-# Linux / macOS
-curl -sSL https://jarv.ai/install.sh | bash
-
-# Windows
-# Baixe jarv-windows-amd64.exe em https://jarv.ai/download
+curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-**A partir do código-fonte**
+2. Pull a model:
 ```bash
-git clone https://github.com/mkvinicius/jarv
-cd jarv
+ollama pull llama3.2:latest
+```
+
+3. Run JARV:
+```bash
 go build -o jarv ./cmd/jarv
 ./jarv start
 ```
 
-### Início Rápido
+### Using Docker
 
 ```bash
-# Inicia o JARV (abre o dashboard em http://localhost:7777)
-jarv start
-
-# Conversa via terminal
-jarv chat "Quero montar um squad de atendimento ao cliente"
-
-# Roda o Oracle
-jarv oracle "Devo lançar meu produto agora ou esperar o próximo trimestre?"
+cd examples
+docker-compose up -d
 ```
 
-### Modos de Operação
+This starts JARV alongside Ollama with GPU support.
 
-| Modo | Arquétipos Oracle | Modelos usados | Custo estimado/mês |
-|---|---|---|---|
-| **Econômico** | 3 | Mini/Nano | ~$2–5 |
-| **Balanceado** (padrão) | 4 | Misto inteligente | ~$10–20 |
-| **Máximo** | 5 | Premium sempre | ~$50–100+ |
+## Installation
 
-### Menções Honrosas
+### From Source
 
-O JARV é uma criação original, mas a inovação nunca acontece no vácuo. Este projeto foi profundamente inspirado pelas ideias brilhantes das seguintes iniciativas:
-
-- **PicoClaw** (Sipeed) — nos inspirou a buscar a leveza extrema e o uso de Go puro.
-- **MiroFish** — provou que a simulação social com LLMs é o futuro da previsão.
-- **OpenSquad** — demonstrou a elegância de criar squads por linguagem natural.
-- **Skill-Creator** — mostrou o poder de transformar processos em habilidades reutilizáveis.
-- **APEX** — elevou o padrão de como a segurança deve ser tratada em sistemas de IA.
-
-A esses criadores, nosso respeito. O JARV pega o bastão dessas ideias e as leva para uma nova fronteira de eficiência.
-
----
-
-<a id="english"></a>
-## 🇺🇸 English
-
-> **The world's most efficient AI agent orchestrator. Runs anywhere. Thinks like an army.**
-
-### What is JARV?
-
-JARV is an AI agent orchestration system built from scratch in pure Go. It was born from observing great community projects, extracting the essence of their concepts to create a **proprietary, original, and ultra-lightweight architecture**.
-
-It is not a fork, it is not a copy. It is a new creation that solves the cost, weight, and complexity problems of current systems.
-
-| Capability | What JARV Created |
-|---|---|
-| **Agent Engine** | Hexagonal Architecture in pure Go, 40% more RAM efficient |
-| **Security** | MIL-SPEC Shield with parallel detection and collective immunity |
-| **Prediction** | Oracle Lite: archetypal sampling simulation (99% accuracy, 1% cost) |
-| **Squads** | Integrated Architect that designs teams via natural language |
-| **Skills** | Skill engine with 10-point automatic QA and Marketplace |
-
-### Why is JARV different?
-
-#### Maximum performance, minimum cost
-JARV uses 5 proprietary innovations to deliver extreme efficiency:
-1. **Smart Router v2** — routes each message to the cheapest model that can solve it (-58% token cost)
-2. **Semantic Cache** — similar responses are served from memory in milliseconds (zero cost)
-3. **Swarm Executor** — parallel agents via native Go goroutines (-75% latency in squads)
-4. **Sampling Oracle** — 4 archetypes capture 95% of the accuracy of 1,000 agents
-5. **Graph Memory** — deep context without extra LLM calls
-
-#### Runs anywhere
-```
-Raspberry Pi Zero 2W  →  512MB RAM  →  ✅ Works
-$5/month VPS          →  1GB RAM    →  ✅ Works
-Old Laptop            →  4GB RAM    →  ✅ Works
-Enterprise Server     →  64GB RAM   →  ✅ Works (max settings)
-```
-
-#### Offline-first, online when available
-JARV works 100% without internet. When connected, it synchronizes memory, accesses external LLMs, and uses cloud integrations — all transparently.
-
-### Installation
-
-**Executable (recommended)**
 ```bash
-# Linux / macOS
-curl -sSL https://jarv.ai/install.sh | bash
-
-# Windows
-# Download jarv-windows-amd64.exe at https://jarv.ai/download
-```
-
-**From source**
-```bash
-git clone https://github.com/mkvinicius/jarv
+git clone https://github.com/mkvinicius/jarv.git
 cd jarv
 go build -o jarv ./cmd/jarv
-./jarv start
 ```
 
-### Quick Start
+### Using Homebrew
 
 ```bash
-# Start JARV (opens dashboard at http://localhost:7777)
-jarv start
-
-# Chat via terminal
-jarv chat "I want to build a customer support squad"
-
-# Run the Oracle
-jarv oracle "Should I launch my product now or wait for the next quarter?"
+brew install mkvinicius/tap/jarv
 ```
 
-### Operating Modes
+## Configuration
 
-| Mode | Oracle Archetypes | Models Used | Estimated Cost/month |
-|---|---|---|---|
-| **Economy** | 3 | Mini/Nano | ~$2–5 |
-| **Balanced** (default) | 4 | Smart mix | ~$10–20 |
-| **Maximum** | 5 | Premium always | ~$50–100+ |
+Create `~/.jarv/config.yaml`:
 
-### Honorable Mentions
+```yaml
+server:
+  host: "0.0.0.0"
+  port: 7777
 
-JARV is an original creation, but innovation never happens in a vacuum. This project was deeply inspired by the brilliant ideas of the following initiatives:
+llm:
+  provider: "ollama"  # or "openai", "anthropic"
+  base_url: "http://localhost:11434"
+  model: "llama3.2:latest"
+  api_key: ""  # only for cloud providers
 
-- **PicoClaw** (Sipeed) — inspired us to seek extreme lightness and the use of pure Go.
-- **MiroFish** — proved that social simulation with LLMs is the future of prediction.
-- **OpenSquad** — demonstrated the elegance of creating squads via natural language.
-- **Skill-Creator** — showed the power of transforming processes into reusable skills.
-- **APEX** — raised the standard of how security should be handled in AI systems.
+mcp:
+  enabled: true
+  port: 8080
 
-To these creators, our respect. JARV takes the baton of these ideas and carries them to a new frontier of efficiency.
+metrics:
+  enabled: true
+  path: "/metrics"
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OLLAMA_BASE_URL` | Ollama server URL | `http://localhost:11434` |
+| `OPENAI_API_KEY` | OpenAI API key | - |
+| `ANTHROPIC_API_KEY` | Anthropic API key | - |
+| `JARV_CONFIG` | Config file path | `~/.jarv/config.yaml` |
+
+## Usage
+
+### CLI Commands
+
+```bash
+# Start the server
+jarv start
+
+# Interactive chat
+jarv chat
+
+# Run oracle (scenario testing)
+jarv oracle "Your test scenario here"
+
+# Start MCP server
+jarv mcp serve
+
+# Show version
+jarv version
+```
+
+### Programmatic Usage
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    "github.com/mkvinicius/jarv/internal/core/agent"
+    "github.com/mkvinicius/jarv/internal/ports/llm"
+)
+
+func main() {
+    prov, err := llm.NewOllamaProvider(llm.OllamaConfig{
+        BaseURL:      "http://localhost:11434",
+        DefaultModel: "llama3.2:latest",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    engine := agent.NewEngine(agent.Config{
+        Name:     "JARV",
+        Persona:  "A helpful AI assistant",
+        Language: "en",
+    }, prov)
+
+    resp, err := engine.Process(context.Background(), agent.Request{
+        Text: "Hello, how are you?",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(resp.Text)
+}
+```
+
+## MCP Server
+
+JARV includes a built-in MCP server for integrating with external tools and services.
+
+### Starting the MCP Server
+
+```bash
+jarv mcp serve
+```
+
+### Using MCP Tools
+
+The MCP server exposes JARV's capabilities via the standard MCP protocol:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "id": 1
+}
+```
+
+### Custom MCP Servers
+
+Connect external MCP servers by configuring them in `config.yaml`:
+
+```yaml
+mcp:
+  servers:
+    - name: "filesystem"
+      command: ["npx", "@modelcontextprotocol/server-filesystem", "/path/to/dir"]
+```
+
+## Plugin System
+
+JARV supports plugins for extending functionality.
+
+### Writing a Plugin
+
+```go
+package main
+
+import (
+    "encoding/json"
+)
+
+type MyPlugin struct{}
+
+func (p *MyPlugin) Name() string    { return "my-plugin" }
+func (p *MyPlugin) Version() string { return "1.0.0" }
+
+func (p *MyPlugin) Init(cfg json.RawMessage) error {
+    return nil
+}
+
+func (p *MyPlugin) Tools() []plugins.Tool {
+    return []plugins.Tool{
+        {
+            Name:        "my_tool",
+            Description: "Does something useful",
+            Handler: func(ctx context.Context, args map[string]any) (any, error) {
+                return "result", nil
+            },
+        },
+    }
+}
+
+func (p *MyPlugin) Shutdown() error { return nil }
+
+var JARVPlugin = &MyPlugin{}
+```
+
+### Loading Plugins
+
+Place compiled `.so` files in `~/.jarv/plugins/`:
+
+```bash
+mkdir -p ~/.jarv/plugins
+cp my-plugin.so ~/.jarv/plugins/
+```
+
+## API Reference
+
+### REST API
+
+JARV exposes a REST API on port 7777:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/chat` | POST | Send a chat message |
+| `/chat/history` | GET | Get conversation history |
+| `/health` | GET | Health check |
+| `/metrics` | GET | Prometheus metrics |
+
+### WebSocket
+
+Real-time chat via WebSocket:
+
+```javascript
+const ws = new WebSocket('ws://localhost:7777/ws');
+ws.send(JSON.stringify({ type: 'chat', text: 'Hello!' }));
+```
+
+## Monitoring
+
+### Prometheus Metrics
+
+Enable metrics endpoint in config:
+
+```yaml
+metrics:
+  enabled: true
+  path: "/metrics"
+```
+
+Example Prometheus config:
+
+```yaml
+scrape_configs:
+  - job_name: 'jarv'
+    static_configs:
+      - targets: ['localhost:7777']
+```
+
+### Available Metrics
+
+- `jarv_requests_total` - Total number of requests
+- `jarv_request_duration_seconds` - Request latency
+- `jarv_errors_total` - Total number of errors
+- `jarv_active_connections` - Active connections
+
+## Development
+
+### Building
+
+```bash
+make build
+```
+
+### Testing
+
+```bash
+make test
+```
+
+### Running Locally
+
+```bash
+make run
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `go test ./...`
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Links
+
+- [Documentation](https://github.com/mkvinicius/jarv)
+- [Issue Tracker](https://github.com/mkvinicius/jarv/issues)
+- [Discussions](https://github.com/mkvinicius/jarv/discussions)

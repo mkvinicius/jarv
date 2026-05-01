@@ -1,0 +1,11 @@
+*.md
+.git
+.gitignore
+.bin
+dist
+vendor
+*.test
+*_test.go
+examples
+Makefile
+docker-compose.yml

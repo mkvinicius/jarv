@@ -444,17 +444,17 @@ type sseMessage struct {
 }
 
 type sseHub struct {
-	clients   map[chan sseMessage]struct{}
-	broadcast chan sseMessage
-	subscribe_  chan chan sseMessage
+	clients      map[chan sseMessage]struct{}
+	broadcastCh  chan sseMessage
+	subscribe_   chan chan sseMessage
 	unsubscribe_ chan chan sseMessage
-	mu        sync.RWMutex
+	mu           sync.RWMutex
 }
 
 func newSSEHub() *sseHub {
 	return &sseHub{
 		clients:      make(map[chan sseMessage]struct{}),
-		broadcast:    make(chan sseMessage, 100),
+		broadcastCh:  make(chan sseMessage, 100),
 		subscribe_:   make(chan chan sseMessage, 10),
 		unsubscribe_: make(chan chan sseMessage, 10),
 	}
@@ -472,7 +472,7 @@ func (h *sseHub) run(ctx context.Context) {
 			delete(h.clients, client)
 			close(client)
 			h.mu.Unlock()
-		case msg := <-h.broadcast:
+		case msg := <-h.broadcastCh:
 			h.mu.RLock()
 			for client := range h.clients {
 				select {
@@ -501,7 +501,7 @@ func (h *sseHub) unsubscribe(client chan sseMessage) {
 func (h *sseHub) broadcast(event string, data any) {
 	jsonData, _ := json.Marshal(data)
 	select {
-	case h.broadcast <- sseMessage{Event: event, Data: string(jsonData)}:
+	case h.broadcastCh <- sseMessage{Event: event, Data: string(jsonData)}:
 	default:
 	}
 }

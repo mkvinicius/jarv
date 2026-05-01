@@ -1,0 +1,75 @@
+# JARV Configuration Example
+# Copy to ~/.jarv/config.yaml and customize
+
+# Operation mode: economy|balanced|maximum
+mode: balanced
+
+# LLM Providers
+llm_providers:
+  # Local Ollama (default - no API key needed)
+  - type: ollama
+    name: Local Ollama
+    base_url: http://localhost:11434
+    models:
+      - name: llama3.2:latest
+        tier: standard
+        priority: 1
+      - name: llama3.2-nano:latest
+        tier: nano
+        priority: 2
+
+  # OpenAI (uncomment and add your key)
+  # - type: openai
+  #   name: OpenAI
+  #   api_key: ${OPENAI_API_KEY}
+  #   models:
+  #     - name: gpt-4o
+  #       tier: premium
+  #       priority: 1
+  #     - name: gpt-4o-mini
+  #       tier: standard
+  #       priority: 2
+
+  # Anthropic (uncomment and add your key)
+  # - type: anthropic
+  #   name: Anthropic
+  #   api_key: ${ANTHROPIC_API_KEY}
+  #   models:
+  #     - name: claude-sonnet-4-20250514
+  #       tier: premium
+  #       priority: 1
+
+# Dashboard settings
+dashboard:
+  host: 127.0.0.1
+  port: 7777
+  open_browser: false
+  default_mode: focus  # focus|advanced
+
+# Security shield
+shield:
+  enabled: true
+  log_requests: true
+  block_high_threat: true
+  custom_patterns: []
+
+# Storage
+storage:
+  path: ~/.jarv/data  # leave empty for default
+  cloud_sync: false
+  # cloud_url: https://xxx.supabase.co
+  # cloud_key: your-anon-key
+
+# Agent settings
+agent:
+  name: JARV
+  persona: A helpful, intelligent AI assistant with advanced reasoning capabilities.
+  language: en
+  max_history: 100
+
+# Foresight (Oracle) settings
+foresight:
+  enabled: true
+  default_mode: balanced
+  max_archetypes: 5
+  max_rounds: 5
